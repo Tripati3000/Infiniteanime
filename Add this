@@ -1,0 +1,90 @@
+'use client'
+
+import { cn } from '@/lib/utils'
+import Image from 'next/image'
+import React, { useEffect, useState, useRef } from 'react'
+
+export const InfiniteMovingCards = ({
+  items,
+  direction = 'left',
+  speed = 'fast',
+  pauseOnHover = true,
+  className,
+}: {
+  items: {
+    href: string
+  }[]
+  direction?: 'left' | 'right'
+  speed?: 'fast' | 'normal' | 'slow'
+  pauseOnHover?: boolean
+  className?: string
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const scrollerRef = useRef<HTMLUListElement>(null)
+
+  const [start, setStart] = useState(false)
+
+  // Remove the addAnimation function, as we're no longer manually manipulating the DOM.
+  // We'll keep a useEffect to set up the animation properties.
+  useEffect(() => {
+    getDirection()
+    getSpeed()
+    setStart(true)
+  }, []) // Add an empty dependency array to run this effect only once.
+
+  const getDirection = () => {
+    if (containerRef.current) {
+      if (direction === 'left') {
+        containerRef.current.style.setProperty('--animation-direction', 'forwards')
+      } else {
+        containerRef.current.style.setProperty('--animation-direction', 'reverse')
+      }
+    }
+  }
+
+  const getSpeed = () => {
+    if (containerRef.current) {
+      if (speed === 'fast') {
+        containerRef.current.style.setProperty('--animation-duration', '20s')
+      } else if (speed === 'normal') {
+        containerRef.current.style.setProperty('--animation-duration', '40s')
+      } else {
+        containerRef.current.style.setProperty('--animation-duration', '80s')
+      }
+    }
+  }
+  
+  return (
+    <div
+      ref={containerRef}
+      className={cn(
+        'scroller relative z-20  max-w-7xl overflow-hidden  [mask-image:linear-gradient(to_right,transparent,white_20%,white_80%,transparent)]',
+        className
+      )}
+    >
+      <ul
+        ref={scrollerRef}
+        className={cn(
+          ' flex min-w-full shrink-0 gap-10 py-4 w-max flex-nowrap',
+          start && 'animate-scroll ',
+          pauseOnHover && 'hover:[animation-play-state:paused]'
+        )}
+      >
+        {/*
+          This is the key fix. We duplicate the items array directly in the map function.
+          This ensures React manages all the elements, and we can provide a unique key.
+        */}
+        {[...items, ...items].map((item, idx) => (
+          <Image
+            key={idx} // We are using the index as a key, which is fine for a repeating, static list like this.
+            width={170}
+            height={1}
+            src={item.href}
+            alt={item.href}
+            className="relative rounded-2xl object-contain opacity-50"
+          />
+        ))}
+      </ul>
+    </div>
+  )
+}
